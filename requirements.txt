@@ -25,3 +25,6 @@ requests
 pyserial
 kaleido==0.2.1
 openpyxl
+gspread
+oauth2client
+pandas
