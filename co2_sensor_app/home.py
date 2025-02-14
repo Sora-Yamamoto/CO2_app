@@ -3,10 +3,14 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import pandas as pd
 import time
+import json
 
 # Google Sheets API の認証
 SCOPE = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-CREDS = ServiceAccountCredentials.from_json_keyfile_name("credentials.json", SCOPE)
+
+# Secrets から `credentials.json` の内容を取得
+creds_json = json.loads(st.secrets["GOOGLE_CREDENTIALS"])
+CREDS = ServiceAccountCredentials.from_json_keyfile_dict(creds_json, SCOPE)
 CLIENT = gspread.authorize(CREDS)
 
 # Google Sheets の設定
@@ -50,4 +54,5 @@ def main():
 # メイン関数を実行
 if __name__ == "__main__":
     main()
+
 
