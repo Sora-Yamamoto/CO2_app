@@ -5,10 +5,13 @@ import pandas as pd
 import time
 import json
 
+# ✅ **🔹 ここを最初に配置**（必ず一番上にする）
+st.set_page_config(page_title="CO2 Sensor Application", layout="wide")
+
 # Google Sheets API の認証
 SCOPE = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 
-# Secrets から `GOOGLE_CREDENTIALS` の内容を取得（エラーハンドリング付き）
+# Secrets から `credentials.json` の内容を取得（エラーハンドリング付き）
 try:
     creds_json = json.loads(st.secrets["GOOGLE_CREDENTIALS"])
     CREDS = ServiceAccountCredentials.from_json_keyfile_dict(creds_json, SCOPE)
@@ -16,7 +19,7 @@ try:
     st.success("✅ Google Sheets 認証に成功しました")
 except Exception as e:
     st.error(f"❌ 認証に失敗しました: {e}")
-    st.stop()  # ここでプログラムを停止
+    st.stop()
 
 # Google Sheets の設定
 SPREADSHEET_ID = "1-yaWx4l0AS44lAv9SUBqAQaxSyQqYCGQqEBsl1Zn_Zs"  # Google Sheets の ID
@@ -25,12 +28,10 @@ try:
     st.success("✅ Google Sheets への接続に成功しました")
 except Exception as e:
     st.error(f"❌ Google Sheets の取得に失敗しました: {e}")
-    st.stop()  # ここでプログラムを停止
+    st.stop()
 
 # メイン関数
 def main():
-    st.set_page_config(page_title="CO2 Sensor Application", layout="wide")
-
     # セッションステートの初期化
     for key, value in {
         "ser": None,
