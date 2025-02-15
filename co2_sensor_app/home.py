@@ -8,41 +8,56 @@ import json
 # Google Sheets API の認証
 SCOPE = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 
-# Secrets から `credentials.json` の内容を取得
-creds_json = json.loads(st.secrets["GOOGLE_CREDENTIALS"])
-CREDS = ServiceAccountCredentials.from_json_keyfile_dict(creds_json, SCOPE)
-CLIENT = gspread.authorize(CREDS)
+# Secrets から `GOOGLE_CREDENTIALS` の内容を取得（エラーハンドリング付き）
+try:
+    creds_json = json.loads(st.secrets["GOOGLE_CREDENTIALS"])
+    CREDS = ServiceAccountCredentials.from_json_keyfile_dict(creds_json, SCOPE)
+    CLIENT = gspread.authorize(CREDS)
+    st.success("✅ Google Sheets 認証に成功しました")
+except Exception as e:
+    st.error(f"❌ 認証に失敗しました: {e}")
+    st.stop()  # ここでプログラムを停止
 
 # Google Sheets の設定
 SPREADSHEET_ID = "1-yaWx4l0AS44lAv9SUBqAQaxSyQqYCGQqEBsl1Zn_Zs"  # Google Sheets の ID
-SHEET = CLIENT.open_by_key(SPREADSHEET_ID).sheet1  # 1枚目のシートを取得
+try:
+    SHEET = CLIENT.open_by_key(SPREADSHEET_ID).sheet1  # 1枚目のシートを取得
+    st.success("✅ Google Sheets への接続に成功しました")
+except Exception as e:
+    st.error(f"❌ Google Sheets の取得に失敗しました: {e}")
+    st.stop()  # ここでプログラムを停止
 
 # メイン関数
 def main():
-    st.set_page_config(page_title="My Custom App", layout="wide")
+    st.set_page_config(page_title="CO2 Sensor Application", layout="wide")
 
-    # Initialize Streamlit session state
-    if "ser" not in st.session_state:
-        st.session_state.ser = None
-
-    if "I_435nm_ave" not in st.session_state:
-        st.session_state.I_435nm_ave = 1.9497885376366615
-    if "I_490nm_ave" not in st.session_state:
-        st.session_state.I_490nm_ave = 2.2112016069155542
-    if "I_590nm_ave" not in st.session_state:
-        st.session_state.I_590nm_ave = 0.8408672705516362
-    if "I_735nm_ave" not in st.session_state:
-        st.session_state.I_735nm_ave = 0.8317714985217586
+    # セッションステートの初期化
+    for key, value in {
+        "ser": None,
+        "I_435nm_ave": 1.9497885376366615,
+        "I_490nm_ave": 2.2112016069155542,
+        "I_590nm_ave": 0.8408672705516362,
+        "I_735nm_ave": 0.8317714985217586
+    }.items():
+        if key not in st.session_state:
+            st.session_state[key] = value
 
     # タイトル
     st.title("CO2 Sensor Application")
     st.text("Google Sheets から取得したデータをリアルタイム表示")
 
-    # データを取得して表示する関数
+    # データを取得して表示する関数（エラーハンドリング付き）
     def get_data():
-        data = SHEET.get_all_values()  # Google Sheets からデータ取得
-        df = pd.DataFrame(data, columns=["CO2濃度"])
-        return df
+        try:
+            data = SHEET.get_all_values()  # Google Sheets からデータ取得
+            if not data:  # データが空の場合
+                st.warning("⚠️ Google Sheets にデータがありません")
+                return pd.DataFrame(columns=["CO2濃度"])  # 空のDataFrameを返す
+            df = pd.DataFrame(data, columns=["CO2濃度"])
+            return df
+        except Exception as e:
+            st.error(f"❌ データの取得に失敗しました: {e}")
+            return pd.DataFrame(columns=["CO2濃度"])  # エラー時も空のDataFrameを返す
 
     # データを定期的に更新
     placeholder = st.empty()
